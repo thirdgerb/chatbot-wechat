@@ -6,7 +6,7 @@
  * @author BrightRed
  */
 
-namespace Commune\Chatbot\Wechat\Drivers;
+namespace Commune\Chatbot\Wechat\OfficialAccount;
 
 
 use Commune\Chatbot\Blueprint\Application;
@@ -14,6 +14,7 @@ use Commune\Chatbot\Blueprint\Conversation\Conversation;
 use Commune\Chatbot\Contracts\ChatServer;
 use Commune\Chatbot\Contracts\ConsoleLogger;
 use EasyWeChat\OfficialAccount\Application as Wechat;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Redis;
 use Symfony\Component\Cache\Simple\RedisCache;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
@@ -22,7 +23,7 @@ use Swoole\Http\Request;
 use Swoole\Http\Response;
 use Swoole\Server;
 
-class SwooleWechatServer implements ChatServer
+class SwooleOfficialAccountServer implements ChatServer
 {
     /**
      * @var Application
@@ -46,7 +47,7 @@ class SwooleWechatServer implements ChatServer
     public function __construct(Application $app)
     {
         $this->app = $app;
-        $this->config = $app->getReactorContainer()['config']['wechat'];
+        $this->config = $app->getReactorContainer()['config']['commune']['wechat'];
         $this->server = new \Swoole\Http\Server(
             $this->config['serverIp'],
             $this->config['serverPort']
@@ -66,6 +67,10 @@ class SwooleWechatServer implements ChatServer
         });
 
         $reactor = $this->app->getReactorContainer();
+        $reactor->singleton(
+            ChatServer::class,
+            SwooleOfficialAccountServer::class
+        );
 
         $this->server->on(
             "request",
@@ -99,8 +104,27 @@ class SwooleWechatServer implements ChatServer
      */
     protected function setMessageHandler(Wechat $wechat)
     {
-        $wechat->server->push(function($message){
-            return 'hello';
+        $wechat->server->push(function(Collection $message) use ($wechat){
+            switch ($message['MsgType']) {
+                case 'text':
+                    $request = new OfficialAccountRequest($wechat, $message);
+                    $this->app
+                        ->getKernel()
+                        ->onUserMessage($request);
+                    return $request->getOutput();
+
+                    break;
+                case 'event':
+                case 'image':
+                case 'voice':
+                case 'video':
+                case 'location':
+                case 'link':
+                case 'file':
+                default:
+                    return '暂时不支持的消息';
+            }
+
         });
     }
 

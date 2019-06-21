@@ -11,7 +11,7 @@ namespace Commune\Chatbot\Wechat\Commands;
 
 use Commune\Chatbot\Contracts\ChatServer;
 use Commune\Chatbot\Framework\ChatApp;
-use Commune\Chatbot\Wechat\Drivers\SwooleWechatServer;
+use Commune\Chatbot\Wechat\OfficialAccount\SwooleOfficialAccountServer;
 use Commune\Container\IlluminateAdapter;
 use Illuminate\Console\Command;
 
@@ -25,7 +25,7 @@ class WechatServerCommand extends Command
     public function handle()
     {
         $app = $this->getLaravel();
-        $config = $app['config']['chatbot'];
+        $config = $app['config']['commune']['chatbot'];
 
         $chatApp = new ChatApp(
             $config,
@@ -36,7 +36,7 @@ class WechatServerCommand extends Command
             ->getReactorContainer()
             ->singleton(
                 ChatServer::class,
-                SwooleWechatServer::class
+                SwooleOfficialAccountServer::class
             );
 
         $chatApp->getServer()->run();

@@ -24,7 +24,7 @@ class CommuneWechatServiceProvider extends ServiceProvider
         }
 
         $this->publishes([
-            __DIR__.'/../configs/wechat.php' => config_path('wechat.php'),
+            __DIR__.'/../configs/wechat.php' => config_path('commune/wechat.php'),
         ], 'public');
 
     }
