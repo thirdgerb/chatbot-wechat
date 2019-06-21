@@ -103,16 +103,27 @@ class SwooleWechatServer implements ChatServer
         });
     }
 
-    protected function transformRequest(Request $request) : SymfonyRequest
+    protected function transformRequest(Request $swRequest) : SymfonyRequest
     {
-        return SymfonyRequest::create(
-            $uri = $request->server['request_uri'],
-            $method = $request->server['request_method'],
+        $query = $swRequest->get ?? [];
+        $request = $swRequest->post ?? [];
+        $cookie = $swRequest->cookie ?? [];
+        $files = $swRequest->files ?? [];
+        $content = $swRequest->rawContent() ?: null;
+
+        $server = array_change_key_case($swRequest->server, CASE_UPPER);
+        foreach ($swRequest->header as $key => $val) {
+            $server[sprintf('HTTP_%s', strtoupper(str_replace('-', '_', $key)))] = $val;
+        }
+
+        return new SymfonyRequest(
+            $query,
+            $request,
             [],
-            $request->cookie,
-            $request->files,
-            $request->server,
-            $request->rawContent()
+            $cookie,
+            $files,
+            $server,
+            $content
         );
     }
 
