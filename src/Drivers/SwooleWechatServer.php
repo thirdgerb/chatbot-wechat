@@ -12,8 +12,7 @@ namespace Commune\Chatbot\Wechat\Drivers;
 use Commune\Chatbot\Blueprint\Application;
 use Commune\Chatbot\Blueprint\Conversation\Conversation;
 use Commune\Chatbot\Contracts\ChatServer;
-use Commune\Chatbot\Wechat\Component\WechatComponent;
-use Commune\Chatbot\Wechat\EasyWechat\Wechat;
+use EasyWeChat\OfficialAccount\Application as Wechat;
 use Illuminate\Support\Facades\Redis;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Simple\RedisCache;
@@ -36,22 +35,21 @@ class SwooleWechatServer implements ChatServer
     protected $server;
 
     /**
-     * @var WechatComponent
+     * @var array
      */
     protected $config;
 
     /**
      * SwooleWechatServer constructor.
      * @param Application $app
-     * @param WechatComponent $config
      */
-    public function __construct(Application $app, WechatComponent $config)
+    public function __construct(Application $app)
     {
         $this->app = $app;
-        $this->config = $config;
+        $this->config = $app->getReactorContainer()['config']['wechat'];
         $this->server = new \Swoole\Http\Server(
-            $config->serverIp,
-            $config->serverPort
+            $this->config['serverIp'],
+            $this->config['serverPort']
         );
 
     }
@@ -60,8 +58,8 @@ class SwooleWechatServer implements ChatServer
     protected function bootstrap() : void
     {
         $this->server->on("start", function ($server) {
-            $ip = $this->config->serverIp;
-            $port = $this->config->serverPort;
+            $ip = $this->config['serverIp'];
+            $port = $this->config['serverPort'];
             $this->app
                 ->getConsoleLogger()
                 ->info("Swoole http server is started at $ip:$port");

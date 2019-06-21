@@ -6,9 +6,10 @@
  * @author BrightRed
  */
 
-namespace Commune\Chatbot\Wechat\Laravel\Commands;
+namespace Commune\Chatbot\Wechat\Commands;
 
 
+use Commune\Chatbot\Contracts\ChatServer;
 use Commune\Chatbot\Framework\ChatApp;
 use Commune\Chatbot\Wechat\Drivers\SwooleWechatServer;
 use Commune\Container\IlluminateAdapter;
@@ -31,8 +32,12 @@ class WechatServerCommand extends Command
             new IlluminateAdapter($app)
         );
 
-        $chatApp->getReactorContainer()
-            ->singleton(SwooleWechatServer::class);
+        $chatApp
+            ->getReactorContainer()
+            ->singleton(
+                ChatServer::class,
+                SwooleWechatServer::class
+            );
 
         $chatApp->getServer()->run();
     }

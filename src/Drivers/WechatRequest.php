@@ -13,7 +13,7 @@ namespace Commune\Chatbot\Wechat\Drivers;
 use Commune\Chatbot\Blueprint\Conversation\ConversationMessage;
 use Commune\Chatbot\Blueprint\Conversation\MessageRequest;
 use Commune\Chatbot\Blueprint\Message\Message;
-use Commune\Chatbot\Wechat\EasyWechat\Wechat;
+use EasyWeChat\OfficialAccount\Application as Wechat;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
 
