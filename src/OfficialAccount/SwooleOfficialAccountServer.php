@@ -14,7 +14,6 @@ use Commune\Chatbot\Blueprint\Conversation\Conversation;
 use Commune\Chatbot\Contracts\ChatServer;
 use Commune\Chatbot\Contracts\ConsoleLogger;
 use EasyWeChat\OfficialAccount\Application as Wechat;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Redis;
 use Symfony\Component\Cache\Simple\RedisCache;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
@@ -104,7 +103,7 @@ class SwooleOfficialAccountServer implements ChatServer
      */
     protected function setMessageHandler(Wechat $wechat)
     {
-        $wechat->server->push(function(Collection $message) use ($wechat){
+        $wechat->server->push(function($message) use ($wechat){
             switch ($message['MsgType']) {
                 case 'text':
                     $request = new OfficialAccountRequest($wechat, $message);

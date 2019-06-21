@@ -31,7 +31,7 @@ class OfficialAccountRequest implements MessageRequest, HasIdGenerator
     protected $wechat;
 
     /**
-     * @var Collection
+     * @var array
      */
     protected $message;
 
@@ -60,9 +60,9 @@ class OfficialAccountRequest implements MessageRequest, HasIdGenerator
     /**
      * OfficialAccountRequest constructor.
      * @param Wechat $wechat
-     * @param Collection $message
+     * @param array|Collection $message
      */
-    public function __construct(Wechat $wechat, Collection $message)
+    public function __construct(Wechat $wechat, $message)
     {
         $this->wechat = $wechat;
         $this->message = $message;
