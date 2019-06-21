@@ -12,9 +12,9 @@ namespace Commune\Chatbot\Wechat\Drivers;
 use Commune\Chatbot\Blueprint\Application;
 use Commune\Chatbot\Blueprint\Conversation\Conversation;
 use Commune\Chatbot\Contracts\ChatServer;
+use Commune\Chatbot\Contracts\ConsoleLogger;
 use EasyWeChat\OfficialAccount\Application as Wechat;
 use Illuminate\Support\Facades\Redis;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Simple\RedisCache;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Swoole\Coroutine;
@@ -77,7 +77,8 @@ class SwooleWechatServer implements ChatServer
                 $symfonyRequest = $this->transformRequest($request);
                 $server->rebind('request', $symfonyRequest);
                 // log
-                $logger = $reactor[LoggerInterface::class];
+                $logger = $reactor[ConsoleLogger::class];
+                $server->rebind('logger', $logger);
                 $server->rebind('log', $logger);
                 // cache
                 $predis = Redis::connection()->client();
