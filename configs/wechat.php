@@ -3,16 +3,16 @@
 
 return [
 
-    'serverIp' => '127.0.0.1',
-    'serverPort' => 80,
+    'serverIp' => env('WECHAT_SERVER_IP', '127.0.0.1'),
+    'serverPort' => env('WECHAT_SERVER_PORT', 80),
 
     /**
      * 账号基本信息，请从微信公众平台/开放平台获取
      */
-    'app_id'  => 'your-app-id',         // AppID
-    'secret'  => 'your-app-secret',     // AppSecret
-    'token'   => 'your-token',          // Token
-    'aes_key' => '',                    // EncodingAESKey，兼容与安全模式下请一定要填写！！！
+    'app_id'  => env('WECHAT_APP_ID', 'your-app-id'),         // AppID
+    'secret'  => env('WECHAT_SECRET', 'your-app-secret'),     // AppSecret
+    'token'   => env('WECHAT_TOKEN', 'your-token'),          // Token
+    'aes_key' => env('WECHAT_AES_KEY', ''),                    // EncodingAESKey，兼容与安全模式下请一定要填写！！！
 
      /**
       * 指定 API 调用返回结果的类型：array(default)/collection/object/raw/自定义类名

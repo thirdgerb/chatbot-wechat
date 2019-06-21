@@ -105,7 +105,7 @@ class SwooleWechatServer implements ChatServer
 
     protected function transformRequest(Request $request) : SymfonyRequest
     {
-        return new SymfonyRequest(
+        return SymfonyRequest::create(
             $uri = $request->server['request_uri'],
             $method = $request->server['request_method'],
             [],
