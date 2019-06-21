@@ -21,19 +21,15 @@ use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Swoole\Coroutine;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
-use Swoole\Server;
 
 class SwooleOfficialAccountServer implements ChatServer
 {
+    protected static $server;
     /**
      * @var Application
      */
     protected $app;
 
-    /**
-     * @var Server
-     */
-    protected $server;
 
     /**
      * @var array
@@ -47,18 +43,22 @@ class SwooleOfficialAccountServer implements ChatServer
     public function __construct(Application $app)
     {
         $this->app = $app;
-        $this->config = $app->getReactorContainer()['config']['commune']['wechat'];
-        $this->server = new \Swoole\Http\Server(
-            $this->config['serverIp'],
-            $this->config['serverPort']
-        );
+
+        if (!isset(self::$server)) {
+
+            $this->config = $app->getReactorContainer()['config']['commune']['wechat'];
+            self::$server = new \Swoole\Http\Server(
+                $this->config['serverIp'],
+                $this->config['serverPort']
+            );
+        }
 
     }
 
 
     protected function bootstrap() : void
     {
-        $this->server->on("start", function ($server) {
+        self::$server->on("start", function ($server) {
             $ip = $this->config['serverIp'];
             $port = $this->config['serverPort'];
             $this->app
@@ -72,7 +72,7 @@ class SwooleOfficialAccountServer implements ChatServer
             SwooleOfficialAccountServer::class
         );
 
-        $this->server->on(
+        self::$server->on(
             "request",
             function (Request $request, Response $response) use ($reactor){
 
@@ -157,7 +157,7 @@ class SwooleOfficialAccountServer implements ChatServer
     public function run(): void
     {
         $this->bootstrap();
-        $this->server->start();
+        self::$server->start();
     }
 
     public function sleep(int $millisecond): void
@@ -167,7 +167,7 @@ class SwooleOfficialAccountServer implements ChatServer
 
     public function fail(): void
     {
-        $this->server->shutdown();
+        self::$server->shutdown();
     }
 
     public function closeClient(Conversation $conversation): void
