@@ -106,6 +106,7 @@ class SwooleOfficialAccountServer implements ChatServer
         $wechat->server->push(function($message) use ($wechat){
             switch ($message['MsgType']) {
                 case 'text':
+                case 'event':
                     $request = new OfficialAccountRequest($wechat, $message);
                     $this->app
                         ->getKernel()
@@ -113,7 +114,6 @@ class SwooleOfficialAccountServer implements ChatServer
                     return $request->getOutput();
 
                     break;
-                case 'event':
                 case 'image':
                 case 'voice':
                 case 'video':
