@@ -59,6 +59,11 @@ class OfficialAccountRequest extends LaravelMessageRequest
     protected $input;
 
     /**
+     * @var string
+     */
+    protected $id;
+
+    /**
      * OfficialAccountRequest constructor.
      * @param Wechat $wechat
      * @param array $message
@@ -86,7 +91,8 @@ class OfficialAccountRequest extends LaravelMessageRequest
             case 'text' :
                 return new Text($this->input['Content'] ?? '');
             case 'event' :
-                if ($this->input['Event'] === 'subscribe') {
+                $event = $this->input['Event'] ?? '';
+                if ( $event === 'subscribe') {
                     return new ConnectionEvt();
                 }
                 return new WechatEvent($this->input['Event'] ?? '');
@@ -99,7 +105,8 @@ class OfficialAccountRequest extends LaravelMessageRequest
 
     public function fetchMessageId(): string
     {
-        return $this->input['MsgId'];
+        return $this->messageId
+            ?? $this->messageId = $this->input['MsgId'] ?? $this->createUuId();
     }
 
     public function fetchTraceId(): string
