@@ -62,7 +62,7 @@ class OfficialAccountRequest extends LaravelMessageRequest
     {
         $this->wechat = $wechat;
         $this->config = $wechat->getConfig();
-        $this->__construct($message);
+        parent::__construct($message);
     }
 
     public function getChatbotUserId(): string
