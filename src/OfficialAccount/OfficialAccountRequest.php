@@ -197,7 +197,7 @@ class OfficialAccountRequest extends LaravelMessageRequest
     /**
      * @return WechatMessage
      */
-    public function getOutput(): WechatMessage
+    public function getOutput(): ? WechatMessage
     {
         return $this->output;
     }
