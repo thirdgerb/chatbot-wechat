@@ -15,6 +15,7 @@ use Commune\Chatbot\Contracts\ChatServer;
 use Commune\Chatbot\Contracts\ConsoleLogger;
 use EasyWeChat\OfficialAccount\Application as Wechat;
 use Illuminate\Support\Facades\Redis;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Simple\RedisCache;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Swoole\Coroutine;
@@ -73,25 +74,34 @@ class SwooleOfficialAccountServer implements ChatServer
 
         self::$server->on(
             "request",
-            function (Request $request, Response $response) use ($reactor){
+            function (Request $request, Response $response) {
 
-                $server = new Wechat($this->config);
+                try {
 
-                // request
-                $symfonyRequest = $this->transformRequest($request);
-                $server->rebind('request', $symfonyRequest);
-                // log
-                $logger = $reactor[ConsoleLogger::class];
-                $server->rebind('logger', $logger);
-                $server->rebind('log', $logger);
-                // cache
-                $predis = Redis::connection()->client();
-                $server->rebind('cache', new RedisCache($predis));
+                    $server = new Wechat($this->config);
 
-                $this->setMessageHandler($server);
-                // serve
-                $symfonyResponse = $server->server->serve();
-                $response->end($symfonyResponse->getContent());
+                    // request
+                    $symfonyRequest = $this->transformRequest($request);
+                    $server->rebind('request', $symfonyRequest);
+                    // log
+                    $logger = $this->app->getConsoleLogger();
+                    $server->rebind('logger', $logger);
+                    $server->rebind('log', $logger);
+                    // cache
+                    $predis = Redis::connection()->client();
+                    $server->rebind('cache', new RedisCache($predis));
+
+                    $this->setMessageHandler($server);
+                    // serve
+                    $symfonyResponse = $server->server->serve();
+                    $response->end($symfonyResponse->getContent());
+
+                } catch (\Throwable $e) {
+                    $this->app
+                        ->getConsoleLogger()
+                        ->error($e);
+
+                }
             }
         );
     }
@@ -161,7 +171,7 @@ class SwooleOfficialAccountServer implements ChatServer
 
     public function sleep(int $millisecond): void
     {
-        Coroutine::sleep(ceil($millisecond / 1000));
+        Coroutine::sleep($millisecond / 1000);
     }
 
     public function fail(): void

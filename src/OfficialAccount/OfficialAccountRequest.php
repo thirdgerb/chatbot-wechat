@@ -16,6 +16,8 @@ use Commune\Chatbot\Blueprint\Conversation\ConversationMessage;
 use Commune\Chatbot\Blueprint\Conversation\MessageRequest;
 use Commune\Chatbot\Contracts\CacheAdapter;
 use Commune\Chatbot\Framework\Conversation\MessageRequestHelper;
+use Commune\Chatbot\Framework\Messages\Events\ConnectionEvt;
+use Commune\Chatbot\Laravel\Drivers\LaravelMessageRequest;
 use Commune\Chatbot\Wechat\Messages\WechatEvent;
 use Commune\Support\Uuid\HasIdGenerator;
 use Commune\Support\Uuid\IdGeneratorHelper;
@@ -26,26 +28,15 @@ use EasyWeChat\Kernel\Messages\Message as WechatMessage;
 use Illuminate\Support\Facades\Redis;
 use Predis\ClientInterface;
 
-class OfficialAccountRequest implements MessageRequest, HasIdGenerator
+class OfficialAccountRequest extends LaravelMessageRequest 
 {
-    use IdGeneratorHelper, MessageRequestHelper;
 
     /**
      * @var Wechat
      */
     protected $wechat;
 
-    /**
-     * @var array
-     */
-    protected $message;
-
     /*------ cached ------*/
-
-    /**
-     * @var Message
-     */
-    protected $inputMessage;
 
     /**
      * @var string
@@ -53,35 +44,30 @@ class OfficialAccountRequest implements MessageRequest, HasIdGenerator
     protected $userWechatId;
 
     /**
-     * @var ConversationMessage[]
-     */
-    protected $buffer = [];
-
-    /**
      * @var WechatMessage
      */
     protected $output;
 
     /**
+     * @var array
+     */
+    protected $config;
+
+    /**
      * OfficialAccountRequest constructor.
      * @param Wechat $wechat
-     * @param array|Collection|Message $message
+     * @param array $message
      */
-    public function __construct(Wechat $wechat, $message)
+    public function __construct(Wechat $wechat, array $message)
     {
         $this->wechat = $wechat;
-        $this->message = $message;
-    }
-
-
-    public function generateMessageId(): string
-    {
-        return $this->createUuId();
+        $this->config = $wechat->getConfig();
+        $this->__construct($message);
     }
 
     public function getChatbotUserId(): string
     {
-        return $this->message['ToUserName'];
+        return $this->input['ToUserName'];
     }
 
     public function getPlatformId(): string
@@ -89,13 +75,7 @@ class OfficialAccountRequest implements MessageRequest, HasIdGenerator
         return SwooleOfficialAccountServer::class;
     }
 
-    public function fetchMessage(): Message
-    {
-        return $this->inputMessage ?? $this->inputMessage = $this->parseWechatMessage();
-
-    }
-
-    protected function parseWechatMessage() : Message
+    protected function makeInputMessage() : Message
     {
         if ($this->message instanceof Message) {
             return $this->message;
@@ -105,6 +85,9 @@ class OfficialAccountRequest implements MessageRequest, HasIdGenerator
             case 'text' :
                 return new Text($this->message['Content'] ?? '');
             case 'event' :
+                if ($this->message['Event'] === 'subscribe') {
+                    return new ConnectionEvt();
+                }
                 return new WechatEvent($this->message['Event'] ?? '');
             default :
                 // todo
@@ -141,8 +124,9 @@ class OfficialAccountRequest implements MessageRequest, HasIdGenerator
 
     public function fetchUserName(): string
     {
-        // todo
-        return '未知用户';
+        return $this->fetchUserData()['nickname'] 
+            ?? $this->config['defaults']['nickname']
+            ?? 'guest';
     }
 
     public function getOpenId() : string
@@ -158,23 +142,23 @@ class OfficialAccountRequest implements MessageRequest, HasIdGenerator
     {
         try {
 
-//            /**
-//             * @var CacheAdapter $cache
-//             */
-//            $cache = $this->conversation->make(CacheAdapter::class);
-//
-//            $id = $this->fetchUserId();
-//            $key = "commune:chatbot:wechat:user:$id";
-//
-//            if ($cache->has($key)) {
-//                $data = $cache->get($key);
-//                if (is_string($data)) {
-//                    $array = unserialize($data);
-//                    if (is_array($array)) {
-//                        return $array;
-//                    }
-//                }
-//            }
+            /**
+             * @var CacheAdapter $cache
+             */
+            $cache = $this->conversation->make(CacheAdapter::class);
+
+            $id = $this->fetchUserId();
+            $key = "commune:chatbot:wechat:user:$id";
+
+            if ($cache->has($key)) {
+                $data = $cache->get($key);
+                if (is_string($data)) {
+                    $array = unserialize($data);
+                    if (is_array($array)) {
+                        return $array;
+                    }
+                }
+            }
 
             $openId = $this->getOpenId();
 
@@ -184,92 +168,29 @@ class OfficialAccountRequest implements MessageRequest, HasIdGenerator
             }
 
             $user = $this->wechat->user->get($this->getOpenId());
-            $this->logger->info("wechat user : ". json_encode($user));
+            $serialized = serialize($user);
+            $cache->set($key, $serialized, 3600);
 
-            return [];
+            return $user;
+
         } catch (\Exception $e) {
             $this->logger->error($e);
             return [];
+
         }
-    }
-
-    public function bufferConversationMessage(ConversationMessage $message): void
-    {
-        $this->buffer[] = $message;
-    }
-
-    protected function userMessageKey(string $userId) : string
-    {
-        return "commune:chatbot:messageTo:$userId";
-    }
-
-    public function flushChatMessages(): void
-    {
-        $this->bufferToCache($this->buffer);
-        $this->buffer = [];
-
-        $cached = $this->fetchCachedMessages();
-
-        // 微信貌似目前只能回复一条消息. 干脆只允许回复文本好了.
-        $text = implode("\n", array_map(function(ConversationMessage $message) {
-            return $message->getMessage()->getText();
-        }, $cached));
-
-        $this->output = new WechatText($text);
     }
 
     /**
      * @param ConversationMessage[] $messages
      */
-    protected function bufferToCache(array $messages) : void
+    protected function renderChatMessages(array $messages): void
     {
-        // 先把消息压到队列里.
-        Redis::pipeline(function($pipe) use ($messages){
-            /**
-             * @var ClientInterface $pipe
-             */
-            $push = [];
-            foreach ($messages as $message) {
-                $key = $this->userMessageKey($message->getUserId());
-                $push[$key] = serialize($message);
-            }
+        // 微信貌似目前只能回复一条消息. 干脆只允许回复文本好了.
+        $text = implode("\n", array_map(function(ConversationMessage $message) {
+            return $message->getMessage()->getText();
+        }, $messages));
 
-            foreach ($push as $key => $messages) {
-                $pipe->lpush($key, $messages);
-            }
-        });
-    }
-
-    /**
-     * @return ConversationMessage[]
-     */
-    protected function fetchCachedMessages() : array
-    {
-        $key = $this->userMessageKey($this->fetchUserId());
-        $list = Redis::connection()->lrange($key, 0, -1);
-
-        $buffer = [];
-        $now = time();
-
-        $delay = [];
-        foreach ($list as $serialized) {
-            /**
-             * @var ConversationMessage $unserialized
-             */
-            $unserialized = unserialize($serialized);
-            if (!$unserialized instanceof ConversationMessage) {
-                continue;
-            }
-
-            if ($unserialized->message->getDeliverAt()->timestamp > $now) {
-                array_unshift($buffer, $unserialized);
-            } else {
-                $delay[] = $serialized;
-            }
-        }
-
-        $this->bufferToCache($delay);
-        return $buffer;
+        $this->output = new WechatText($text);
     }
 
     /**

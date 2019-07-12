@@ -45,4 +45,9 @@ return [
         'scopes'   => ['snsapi_userinfo'],
         'callback' => '/examples/oauth_callback.php',
     ],
+
+
+    'defaults' => [
+        'nickname' => 'guest',
+    ],
 ];
