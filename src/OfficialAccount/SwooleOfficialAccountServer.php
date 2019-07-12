@@ -75,7 +75,7 @@ class SwooleOfficialAccountServer implements ChatServer
             "request",
             function (Request $request, Response $response) use ($reactor){
 
-                $server = new Wechat($reactor['config']['wechat']);
+                $server = new Wechat($this->config);
 
                 // request
                 $symfonyRequest = $this->transformRequest($request);
