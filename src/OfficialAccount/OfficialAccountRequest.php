@@ -54,6 +54,11 @@ class OfficialAccountRequest extends LaravelMessageRequest
     protected $config;
 
     /**
+     * @var array
+     */
+    protected $input;
+
+    /**
      * OfficialAccountRequest constructor.
      * @param Wechat $wechat
      * @param array $message
@@ -77,18 +82,14 @@ class OfficialAccountRequest extends LaravelMessageRequest
 
     protected function makeInputMessage() : Message
     {
-        if ($this->message instanceof Message) {
-            return $this->message;
-        }
-
-        switch ($this->message['MsgType']) {
+        switch ($this->input['MsgType']) {
             case 'text' :
-                return new Text($this->message['Content'] ?? '');
+                return new Text($this->input['Content'] ?? '');
             case 'event' :
-                if ($this->message['Event'] === 'subscribe') {
+                if ($this->input['Event'] === 'subscribe') {
                     return new ConnectionEvt();
                 }
-                return new WechatEvent($this->message['Event'] ?? '');
+                return new WechatEvent($this->input['Event'] ?? '');
             default :
                 // todo
                 return new Text('暂时不支持的消息');
@@ -112,7 +113,7 @@ class OfficialAccountRequest extends LaravelMessageRequest
             return $this->userWechatId;
         }
 
-        $value = $this->message['FromUserName'];
+        $value = $this->input['FromUserName'];
         if (empty($value)) {
             throw new \InvalidArgumentException(
                 __METHOD__
@@ -163,7 +164,7 @@ class OfficialAccountRequest extends LaravelMessageRequest
             $openId = $this->getOpenId();
 
             if (empty($openId)) {
-                $this->logger->error("empty wechat openId: ". json_encode($this->message));
+                $this->logger->error("empty wechat openId: ". json_encode($this->input));
                 return [];
             }
 
