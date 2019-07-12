@@ -11,6 +11,7 @@ namespace Commune\Chatbot\Wechat\OfficialAccount;
 
 
 use Commune\Chatbot\App\Messages\Text;
+use Commune\Chatbot\Blueprint\Conversation\Conversation;
 use Commune\Chatbot\Blueprint\Message\Message;
 use Commune\Chatbot\Blueprint\Conversation\ConversationMessage;
 use Commune\Chatbot\Blueprint\Conversation\MessageRequest;
@@ -73,6 +74,12 @@ class OfficialAccountRequest extends LaravelMessageRequest
         $this->wechat = $wechat;
         $this->config = $wechat->getConfig();
         parent::__construct($message);
+    }
+
+    public function withConversation(Conversation $conversation): void
+    {
+        $conversation->share(Wechat::class, $this->wechat);
+        parent::withConversation($conversation);
     }
 
     public function getChatbotUserId(): string
