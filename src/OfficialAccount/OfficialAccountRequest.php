@@ -98,7 +98,7 @@ class OfficialAccountRequest extends LaravelMessageRequest
 
     public function fetchMessageId(): string
     {
-        return $this->message['MsgId'];
+        return $this->input['MsgId'];
     }
 
     public function fetchTraceId(): string
