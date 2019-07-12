@@ -194,7 +194,7 @@ class OfficialAccountRequest extends LaravelMessageRequest
     protected function renderChatMessages(array $messages): void
     {
         // 微信貌似目前只能回复一条消息. 干脆只允许回复文本好了.
-        $text = implode("\n", array_map(function(ConversationMessage $message) {
+        $text = implode("\n\n", array_map(function(ConversationMessage $message) {
             return $message->getMessage()->getText();
         }, $messages));
 
