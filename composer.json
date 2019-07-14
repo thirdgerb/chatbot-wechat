@@ -17,7 +17,7 @@
     },
     "require": {
         "php" : "^7.2",
-        "commune/chatbot-laravel" : "dev-develop",
+        "commune/chatbot-laravel" : "dev-master",
         "overtrue/wechat": "~4.0"
     },
     "repositories" : [
