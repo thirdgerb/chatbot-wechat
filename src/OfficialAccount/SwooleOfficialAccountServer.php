@@ -79,6 +79,7 @@ class SwooleOfficialAccountServer implements ChatServer
                 try {
 
                     $server = new Wechat($this->config);
+                    
 
                     // request
                     $symfonyRequest = $this->transformRequest($request);
@@ -114,7 +115,8 @@ class SwooleOfficialAccountServer implements ChatServer
     protected function setMessageHandler(Wechat $wechat)
     {
         $wechat->server->push(function($message) use ($wechat){
-            switch ($message['MsgType']) {
+            $type = $message['MsgType'] ?? '';
+            switch ($type) {
                 case 'text':
                 case 'event':
                     $request = new OfficialAccountRequest($wechat, $message);
@@ -131,7 +133,7 @@ class SwooleOfficialAccountServer implements ChatServer
                 case 'link':
                 case 'file':
                 default:
-                    return '暂时不支持的消息';
+                    return null;
             }
 
         });
