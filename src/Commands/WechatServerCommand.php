@@ -33,7 +33,7 @@ class WechatServerCommand extends Command
         );
 
         $chatApp
-            ->getReactorContainer()
+            ->getProcessContainer()
             ->singleton(
                 ChatServer::class,
                 SwooleOfficialAccountServer::class

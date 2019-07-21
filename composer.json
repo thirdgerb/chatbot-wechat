@@ -9,7 +9,6 @@
             "email": "thirdgerb@gmail.com"
         }
     ],
-    "minimum-stability": "dev",
     "autoload" : {
         "psr-4" : {
             "Commune\\Chatbot\\Wechat\\" : "src/"
@@ -19,15 +18,5 @@
         "php" : "^7.2",
         "commune/chatbot-laravel" : "dev-master",
         "overtrue/wechat": "~4.0"
-    },
-    "repositories" : [
-        {
-            "type" : "path",
-            "url" : "../chatbot-laravel"
-        },
-        {
-            "type": "path",
-            "url": "../chatbot"
-        }
-    ]
+    }
 }

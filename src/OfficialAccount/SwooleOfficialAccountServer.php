@@ -46,7 +46,7 @@ class SwooleOfficialAccountServer implements ChatServer
 
         if (!isset(self::$server)) {
 
-            $this->config = $app->getReactorContainer()['config']['commune']['wechat'];
+            $this->config = $app->getProcessContainer()['config']['commune']['wechat'];
             self::$server = new \Swoole\Http\Server(
                 $this->config['serverIp'],
                 $this->config['serverPort']
@@ -66,8 +66,8 @@ class SwooleOfficialAccountServer implements ChatServer
                 ->info("Swoole http server is started at $ip:$port");
         });
 
-        $reactor = $this->app->getReactorContainer();
-        $reactor->singleton(
+        $processIoc = $this->app->getProcessContainer();
+        $processIoc->singleton(
             ChatServer::class,
             SwooleOfficialAccountServer::class
         );
