@@ -10,6 +10,9 @@ namespace Commune\Chatbot\Wechat\OfficialAccount;
 
 
 
+use Commune\Chatbot\App\Messages\Media\Image;
+use Commune\Chatbot\App\Messages\Media\Voice;
+use Commune\Chatbot\App\Messages\Recognitions\VoiceRecognition;
 use Commune\Chatbot\App\Messages\Text;
 use Commune\Chatbot\Blueprint\Conversation\Conversation;
 use Commune\Chatbot\Blueprint\Message\Message;
@@ -103,6 +106,22 @@ class OfficialAccountRequest extends LaravelMessageRequest
                     return new ConnectionEvt();
                 }
                 return new WechatEvent($this->input['Event'] ?? '');
+            case 'voice' :
+                $id = $this->input['MediaId'] ?? '';
+                $voice = new Voice($id);
+                $recognition = $this->input['Recognition'] ?? null;
+                // 加入语音识别.
+                if (isset($recognition)) {
+                    return new VoiceRecognition($voice, $recognition);
+                }
+                
+                return $voice;
+
+            case 'image' :
+                $id = $this->input['MediaId'] ?? '';
+                $url = $this->input['PicUrl'] ?? '';
+                return new Image($id, $url);
+                
             default :
                 // todo
                 return new Text('暂时不支持的消息');

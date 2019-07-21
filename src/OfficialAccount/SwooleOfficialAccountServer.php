@@ -119,6 +119,8 @@ class SwooleOfficialAccountServer implements ChatServer
             switch ($type) {
                 case 'text':
                 case 'event':
+                case 'voice':
+                case 'image':
                     $request = new OfficialAccountRequest($wechat, $message);
                     $this->app
                         ->getKernel()
@@ -126,12 +128,11 @@ class SwooleOfficialAccountServer implements ChatServer
                     return $request->getOutput();
 
                     break;
-                case 'image':
-                case 'voice':
                 case 'video':
                 case 'location':
                 case 'link':
                 case 'file':
+                    return '暂不支持的消息类型';
                 default:
                     return null;
             }
